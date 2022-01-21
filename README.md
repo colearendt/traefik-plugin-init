@@ -10,3 +10,7 @@ This repository provides a simple container that:
 - Allows specifying GitHub references per plugin (i.e. branch, tag, ref, etc.)
 
 Please see the [./examples](./examples) directory for illustrations of how to use
+
+## Shortcomings
+
+- Tested only against https://github.com . Semantics may be different for other git repository providers
