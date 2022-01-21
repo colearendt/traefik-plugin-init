@@ -66,7 +66,6 @@ This is especially useful as an init container in Kubernetes.
 }
 
 func clonePlugin(env string, dir string) (err error) {
-	// TODO: should I try to get the key at this point? Or do another match later...?
 	envVarRegex := regexp.MustCompile("^([^=]+)=([^@]+)@?([^@]*)?")
 
 	res := envVarRegex.FindStringSubmatch(env)
