@@ -23,7 +23,7 @@ Recommended configuration is with environment variables:
 - `TRAEFIK_PLUGIN_PATH`: the path repositories will be cloned within
 - `TRAEFIK_PLUGIN_PREFIX`: the environment variable prefix to use to define GitHub repositories
 - `TRAEFIK_PLUGIN_REPO_1`, `TRAEFIK_PLUGIN_REPO_2`, etc.: if
-  `TRAEFIK_PLUGIN_PREFIX` = `TRAEFIK_PLUGIN_REPO_`, then these wouldl house
+  `TRAEFIK_PLUGIN_PREFIX` = `TRAEFIK_PLUGIN_REPO_`, then these would house
   your GitHub references
 
 Git URL examples:
