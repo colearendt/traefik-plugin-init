@@ -1,0 +1,32 @@
+# values for some service hosted at `/prefix` path, but listening at `/`
+
+# using an `extraObjects` convention with a helm chart
+# to deploy these middlewares with the chart installation
+extraObjects:
+
+  # strip the prefix off of inbound requests
+  - apiVersion: traefik.containo.us/v1alpha1
+    kind: Middleware
+    metadata:
+      name: service-path-prefix
+    spec:
+      stripPrefix:
+        prefixes:
+          - /prefix
+
+  # rewrite redirects so that they add the prefix back
+  # (considered to be relative redirects here)
+  - apiVersion: traefik.containo.us/v1alpha1
+    kind: Middleware
+    metadata:
+      name: service-path-rewrite
+    spec:
+      plugin:
+        # this key matches the name we gave this plugin in the "additionalArguments"
+        rewriteHeaders:
+          # this is now plugin configuration
+          rewrites:
+            - header: "Location"
+              regex: "^(.*)$"
+              replacement: "/prefix$1"
+

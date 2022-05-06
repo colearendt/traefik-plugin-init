@@ -1,0 +1,38 @@
+# traefik values file 
+#   - run the init container to clone the plugin
+#   - tell traefik about the "localplugin"
+
+# tell traefik about the "localplugins"
+additionalArguments:
+  - "--experimental.localplugins.rewriteHeaders.moduleName=github.com/XciD/traefik-plugin-rewrite-headers"
+
+
+# shared volume so the init container clones of the git repositories will be accessible in traefik
+additionalVolumeMounts:
+  - name: local-plugin-volume
+    mountPath: /plugins-local/src/
+deployment:
+
+  replicas: 3
+
+  additionalVolumes:
+    - name: local-plugin-volume
+      emptyDir: {}
+
+  initContainers:
+    - image: "ghcr.io/colearendt/traefik-plugin-init:0b06e6ee493a27ad4d7626bd2bb8a2208e155c94"
+      imagePullPolicy: IfNotPresent
+      name: init-plugins
+      resources: {}
+      volumeMounts:
+        - mountPath: /plugin-storage/
+          name: local-plugin-volume
+      env:
+        - name: TRAEFIK_PLUGIN_PATH
+          # TODO: the plugin-init container should handle the github.com part
+          value: /plugin-storage/github.com/
+        - name: TRAEFIK_PLUGIN_PREFIX
+          value: TRAEFIK_PLUGIN_REPO_
+        - name: TRAEFIK_PLUGIN_REPO_1
+          value: https://github.com/XciD/traefik-plugin-rewrite-headers
+
