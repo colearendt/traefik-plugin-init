@@ -62,7 +62,9 @@ This is especially useful as an init container in Kubernetes.
 			}
 		} else {
 			log.Print("No plugin variables found. Exiting")
+			return
 		}
+		log.Printf("Done cloning plugins")
 	},
 }
 
@@ -132,6 +134,7 @@ func clonePlugin(env string, dir string) (err error) {
 		}
 	}
 
+	log.Printf("Cloning repository '%s' complete", repoUrl)
 	return err
 }
 
