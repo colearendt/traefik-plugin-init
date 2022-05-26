@@ -61,7 +61,9 @@ This is especially useful as an init container in Kubernetes.
 			}
 		} else {
 			log.Print("No plugin variables found. Exiting")
+			return
 		}
+		log.Printf("Done cloning plugins")
 	},
 }
 
@@ -99,25 +101,34 @@ func clonePlugin(env string, dir string) (err error) {
 		ref = "main"
 	}
 
+	masterRef := plumbing.NewBranchReferenceName("master")
+	mainRef := plumbing.NewBranchReferenceName("main")
+
 	// clone or otherwise open the repository
-	cloneOpts := git.CloneOptions{Depth: 0, URL: repoUrl, SingleBranch: true}
+	// TODO: a way to be less redundant here?
+	cloneOptsMaster := git.CloneOptions{Depth: 0, URL: repoUrl, SingleBranch: true, ReferenceName: masterRef}
+	cloneOptsMain := git.CloneOptions{Depth: 0, URL: repoUrl, SingleBranch: true, ReferenceName: mainRef}
 
 	var repoLocal *git.Repository
 	// TODO: a way to build a path more cleanly (i.e. multiple slashes, etc.)
 	fullDir := dir + "/" + repoOwner + "/" + repoName
 	if !exists(fullDir) {
 		log.Printf("Cloning repository '%v' to '%v'\n", repoUrl, fullDir)
-		repoLocal, err = git.PlainClone(fullDir, false, &cloneOpts)
+		repoLocal, err = git.PlainClone(fullDir, false, &cloneOptsMaster)
 		if err != nil {
 			log.Print(err)
-			errors.New("error cloning repository")
+			repoLocal, err = git.PlainClone(fullDir, false, &cloneOptsMain)
+			if err != nil {
+				log.Print(err)
+				return errors.New("error cloning repository")
+			}
 		}
 	} else {
 		log.Printf("Found repository '%v' at '%v'\n", repoUrl, fullDir)
 		repoLocal, err = git.PlainOpen(fullDir)
 		if err != nil {
 			log.Print(err)
-			errors.New("error opening repository")
+			return errors.New("error opening repository")
 		}
 	}
 
@@ -135,6 +146,7 @@ func clonePlugin(env string, dir string) (err error) {
 		return errors.New("error checking out reference")
 	}
 
+	log.Printf("Cloning repository '%s' complete", repoUrl)
 	return err
 }
 
