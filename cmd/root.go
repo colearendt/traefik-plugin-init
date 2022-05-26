@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/spf13/cobra"
@@ -61,7 +62,9 @@ This is especially useful as an init container in Kubernetes.
 			}
 		} else {
 			log.Print("No plugin variables found. Exiting")
+			return
 		}
+		log.Printf("Done cloning plugins")
 	},
 }
 
@@ -99,42 +102,39 @@ func clonePlugin(env string, dir string) (err error) {
 		ref = "main"
 	}
 
-	// clone or otherwise open the repository
-	cloneOpts := git.CloneOptions{Depth: 0, URL: repoUrl, SingleBranch: true}
+	// define multiple refs, in case one fails... there really should be a better way...
+	refObj := plumbing.NewBranchReferenceName(ref)
+	refObjTag := plumbing.NewTagReferenceName(ref)
+	refObjNote := plumbing.NewNoteReferenceName(ref)
 
-	var repoLocal *git.Repository
+	cloneOpts := git.CloneOptions{Depth: 0, URL: repoUrl, SingleBranch: true, ReferenceName: refObj}
+	cloneOptsTag := git.CloneOptions{Depth: 0, URL: repoUrl, SingleBranch: true, ReferenceName: refObjTag}
+	cloneOptsNote := git.CloneOptions{Depth: 0, URL: repoUrl, SingleBranch: true, ReferenceName: refObjNote}
+
 	// TODO: a way to build a path more cleanly (i.e. multiple slashes, etc.)
 	fullDir := dir + "/" + repoOwner + "/" + repoName
-	if !exists(fullDir) {
-		log.Printf("Cloning repository '%v' to '%v'\n", repoUrl, fullDir)
-		repoLocal, err = git.PlainClone(fullDir, false, &cloneOpts)
+	if exists(fullDir) {
+		return errors.New(fmt.Sprintf("directory %s already exists", fullDir))
+	}
+
+	// clone the repository
+	// we try multiple ref types on failure
+	// TODO: SHA refs will fail presently
+	_, err = git.PlainClone(fullDir, false, &cloneOpts)
+	if err != nil {
+		log.Print(err)
+		_, err = git.PlainClone(fullDir, false, &cloneOptsTag)
 		if err != nil {
 			log.Print(err)
-			errors.New("error cloning repository")
-		}
-	} else {
-		log.Printf("Found repository '%v' at '%v'\n", repoUrl, fullDir)
-		repoLocal, err = git.PlainOpen(fullDir)
-		if err != nil {
-			log.Print(err)
-			errors.New("error opening repository")
+			_, err = git.PlainClone(fullDir, false, &cloneOptsNote)
+			if err != nil {
+				log.Print(err)
+				return errors.New("error cloning repository")
+			}
 		}
 	}
 
-	// check out the proper ref
-	worktreeLocal, err := repoLocal.Worktree()
-	if err != nil {
-		log.Print(err)
-		return errors.New("error getting repository worktree")
-	}
-	// TODO: pull to get new updates to the ref??
-	gitRef := plumbing.NewReferenceFromStrings("local", ref)
-	err = worktreeLocal.Checkout(&git.CheckoutOptions{Hash: gitRef.Hash()})
-	if err != nil {
-		log.Print(err)
-		return errors.New("error checking out reference")
-	}
-
+	log.Printf("Cloning repository '%s' complete", repoUrl)
 	return err
 }
 

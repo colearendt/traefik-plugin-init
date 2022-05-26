@@ -31,14 +31,16 @@ Git URL examples:
   default branch at container startup)
 - `https://github.com/XciD/traefik-plugin-rewrite-headers@main` (chooses a
   branch or tag ref)
-- `https://github.com/XciD/traefik-plugin-rewrite-headers@e66f2dc` (chooses a
+- **NOTE: BROKEN:** `https://github.com/XciD/traefik-plugin-rewrite-headers@e66f2dc` (chooses a
   sha)
 
 **NOTE:** in production, it is recommended to pin plugins to an immutable
-reference (usually a `sha` or `tag`). Otherwise, restarting traefik pods can
+reference (usually a `tag`). Otherwise, restarting traefik pods can
 change plugin versions
 
 ## Shortcomings
 
-- Tested only against https://github.com . Semantics may be different for other
+- Tested only interactively against https://github.com . Semantics may be different for other
   git repository providers
+- SHA refs are currently broken
+- Need to test properly
